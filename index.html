@@ -1,0 +1,729 @@
+<html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Number Inputs & Excel AI Assistant</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- SheetJS CDN for parsing Excel/CSV files in-browser -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- Marked CDN for rendering Markdown responses in chat -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0284c7',
+              600: '#0284c7',
+              700: '#0369a1',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom Scrollbar for Chat */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    .dark ::-webkit-scrollbar-thumb {
+      background: #475569;
+    }
+    /* Hide spin buttons for numeric inputs */
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans antialiased">
+
+  <!-- Header -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/20">
+          <i class="fa-solid fa-calculator text-lg"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg leading-tight text-white">Data & AI Hub</h1>
+          <p class="text-xs text-slate-400">6-Digit Code Vault & Excel Gemini Assistant</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <!-- Optional API Key Button / Status -->
+        <button id="apiKeyBtn" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition flex items-center gap-2">
+          <i class="fa-solid fa-key text-cyan-400"></i>
+          <span id="apiKeyStatus">API Key: Pre-configured</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6">
+    
+    <!-- Left Column: 5 Two-Digit Code Boxes & Controls -->
+    <section class="lg:col-span-5 flex flex-col gap-6">
+      
+      <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-5 shadow-xl backdrop-blur-sm">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-base font-semibold text-slate-100 flex items-center gap-2">
+              <i class="fa-solid fa-boxes-stacked text-cyan-400"></i>
+              2-Digit Inputs (00 - 99)
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">Values auto-format to 2 digits and are attached to AI context.</p>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button id="btnRandomize" title="Fill Random" class="p-2 text-slate-400 hover:text-cyan-400 hover:bg-slate-700/50 rounded-lg transition text-xs">
+              <i class="fa-solid fa-dice"></i>
+            </button>
+            <button id="btnClearBoxes" title="Clear All" class="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-700/50 rounded-lg transition text-xs">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- 6 Interactive Inputs -->
+        <div class="grid grid-cols-6 gap-1.5 sm:gap-2 mb-4">
+          <!-- Box 1 -->
+          <div class="flex flex-col items-center">
+            <label class="text-[9px] font-mono font-medium text-slate-400 mb-1">BOX 1</label>
+            <input type="text" maxlength="2" inputmode="numeric" data-index="0"
+              class="code-box w-full aspect-square text-center font-mono text-lg sm:text-xl font-bold bg-slate-900 border-2 border-slate-700 rounded-xl text-cyan-400 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 focus:outline-none transition-all shadow-inner" 
+              placeholder="00" />
+            <span class="status-dot text-[9px] text-slate-500 mt-1">Empty</span>
+          </div>
+          <!-- Box 2 -->
+          <div class="flex flex-col items-center">
+            <label class="text-[9px] font-mono font-medium text-slate-400 mb-1">BOX 2</label>
+            <input type="text" maxlength="2" inputmode="numeric" data-index="1"
+              class="code-box w-full aspect-square text-center font-mono text-lg sm:text-xl font-bold bg-slate-900 border-2 border-slate-700 rounded-xl text-cyan-400 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 focus:outline-none transition-all shadow-inner" 
+              placeholder="00" />
+            <span class="status-dot text-[9px] text-slate-500 mt-1">Empty</span>
+          </div>
+          <!-- Box 3 -->
+          <div class="flex flex-col items-center">
+            <label class="text-[9px] font-mono font-medium text-slate-400 mb-1">BOX 3</label>
+            <input type="text" maxlength="2" inputmode="numeric" data-index="2"
+              class="code-box w-full aspect-square text-center font-mono text-lg sm:text-xl font-bold bg-slate-900 border-2 border-slate-700 rounded-xl text-cyan-400 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 focus:outline-none transition-all shadow-inner" 
+              placeholder="00" />
+            <span class="status-dot text-[9px] text-slate-500 mt-1">Empty</span>
+          </div>
+          <!-- Box 4 -->
+          <div class="flex flex-col items-center">
+            <label class="text-[9px] font-mono font-medium text-slate-400 mb-1">BOX 4</label>
+            <input type="text" maxlength="2" inputmode="numeric" data-index="3"
+              class="code-box w-full aspect-square text-center font-mono text-lg sm:text-xl font-bold bg-slate-900 border-2 border-slate-700 rounded-xl text-cyan-400 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 focus:outline-none transition-all shadow-inner" 
+              placeholder="00" />
+            <span class="status-dot text-[9px] text-slate-500 mt-1">Empty</span>
+          </div>
+          <!-- Box 5 -->
+          <div class="flex flex-col items-center">
+            <label class="text-[9px] font-mono font-medium text-slate-400 mb-1">BOX 5</label>
+            <input type="text" maxlength="2" inputmode="numeric" data-index="4"
+              class="code-box w-full aspect-square text-center font-mono text-lg sm:text-xl font-bold bg-slate-900 border-2 border-slate-700 rounded-xl text-cyan-400 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 focus:outline-none transition-all shadow-inner" 
+              placeholder="00" />
+            <span class="status-dot text-[9px] text-slate-500 mt-1">Empty</span>
+          </div>
+          <!-- Box 6 -->
+          <div class="flex flex-col items-center">
+            <label class="text-[9px] font-mono font-medium text-slate-400 mb-1">BOX 6</label>
+            <input type="text" maxlength="2" inputmode="numeric" data-index="5"
+              class="code-box w-full aspect-square text-center font-mono text-lg sm:text-xl font-bold bg-slate-900 border-2 border-slate-700 rounded-xl text-cyan-400 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 focus:outline-none transition-all shadow-inner" 
+              placeholder="00" />
+            <span class="status-dot text-[9px] text-slate-500 mt-1">Empty</span>
+          </div>
+        </div>
+
+        <!-- Box Context Summary Bar -->
+        <div class="bg-slate-900/60 rounded-xl p-3 border border-slate-700/50 flex items-center justify-between text-xs">
+          <span class="text-slate-400">Combined Code Pattern:</span>
+          <span id="combinedCodeDisplay" class="font-mono font-bold text-cyan-400 tracking-wider">-- -- -- -- -- --</span>
+        </div>
+      </div>
+
+      <!-- Excel/CSV Attachment Summary Card -->
+      <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-5 shadow-xl backdrop-blur-sm flex-1 flex flex-col">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-base font-semibold text-slate-100 flex items-center gap-2">
+            <i class="fa-solid fa-file-excel text-emerald-400"></i>
+            Spreadsheet Data Preview
+          </h2>
+          <span id="sheetMeta" class="text-xs text-slate-400">No file uploaded</span>
+        </div>
+
+        <div id="filePreviewContainer" class="flex-1 min-h-[160px] bg-slate-900/80 border border-slate-800 rounded-xl p-3 overflow-auto flex flex-col justify-center items-center text-center">
+          <i class="fa-solid fa-file-circle-plus text-3xl text-slate-600 mb-2"></i>
+          <p class="text-xs text-slate-400 max-w-xs">Upload an Excel (.xlsx, .xls) or CSV file in the chat bar below to inspect spreadsheet data here.</p>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Right Column: AI Chatbot Assistant -->
+    <section class="lg:col-span-7 flex flex-col bg-slate-800/80 border border-slate-700/60 rounded-2xl shadow-xl overflow-hidden min-h-[580px] h-[calc(100vh-8rem)]">
+      
+      <!-- Chat Header -->
+      <div class="px-5 py-3.5 border-b border-slate-700/60 bg-slate-900/50 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center">
+            <i class="fa-solid fa-robot"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-semibold text-white">Gemini Data Assistant</h3>
+            <p class="text-[11px] text-slate-400 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              Ready to process 6 two-digit codes & spreadsheets
+            </p>
+          </div>
+        </div>
+
+        <button id="btnClearChat" title="Clear Chat History" class="text-xs text-slate-400 hover:text-slate-200 px-2 py-1 rounded hover:bg-slate-700/50 transition">
+          <i class="fa-solid fa-arrows-rotate mr-1"></i> Reset Chat
+        </button>
+      </div>
+
+      <!-- Chat Messages Container -->
+      <div id="chatMessages" class="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
+        <!-- Welcome Message -->
+        <div class="flex gap-3">
+          <div class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0 mt-0.5">
+            <i class="fa-solid fa-robot text-xs"></i>
+          </div>
+          <div class="bg-slate-900/90 border border-slate-700/60 rounded-2xl rounded-tl-none p-4 max-w-[85%] text-slate-200 text-sm space-y-2">
+            <p class="font-medium text-white">Hello! I'm your Gemini AI Data Assistant.</p>
+            <p class="text-slate-300">You can:</p>
+            <ul class="list-disc list-inside text-xs text-slate-400 space-y-1">
+              <li>Enter 2-digit numbers into the 6 boxes on the left.</li>
+              <li>Attach Excel files (<code class="text-cyan-400">.xlsx, .xls</code>) or <code class="text-cyan-400">.csv</code> spreadsheets using the paperclip button below.</li>
+              <li>Ask me to parse, cross-reference, lookup, or summarize row data based on your 6 two-digit code pattern!</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Attachment Chip Tray -->
+      <div id="attachmentTray" class="px-4 py-2 bg-slate-900/40 border-t border-slate-700/40 hidden flex items-center gap-2">
+        <div class="inline-flex items-center gap-2 bg-slate-800 border border-slate-700 text-xs text-slate-200 px-3 py-1.5 rounded-lg">
+          <i class="fa-solid fa-file-excel text-emerald-400"></i>
+          <span id="attachedFileName" class="font-medium max-w-[200px] truncate">filename.xlsx</span>
+          <span id="attachedFileDetails" class="text-[10px] text-slate-400"></span>
+          <button id="btnRemoveAttachment" class="ml-1 text-slate-400 hover:text-rose-400 transition">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <span class="text-[11px] text-emerald-400 font-medium flex items-center gap-1">
+          <i class="fa-solid fa-circle-check"></i> Parsed for AI Context
+        </span>
+      </div>
+
+      <!-- Chat Input Area -->
+      <div class="p-3 sm:p-4 border-t border-slate-700/60 bg-slate-900/60">
+        <form id="chatForm" class="flex items-center gap-2">
+          
+          <!-- File Attachment Input (Hidden) -->
+          <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" class="hidden" />
+          
+          <!-- Attachment Button -->
+          <button type="button" id="btnAttach" title="Attach Excel or CSV file"
+            class="p-2.5 rounded-xl text-slate-400 hover:text-cyan-400 hover:bg-slate-800 border border-slate-700/60 transition shrink-0">
+            <i class="fa-solid fa-paperclip text-base"></i>
+          </button>
+
+          <!-- Prompt Text Area -->
+          <input type="text" id="promptInput" 
+            placeholder="Type your prompt or ask questions about the uploaded file..." 
+            class="flex-1 bg-slate-900 border border-slate-700/70 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition"
+            autocomplete="off" />
+
+          <!-- Send Button -->
+          <button type="submit" id="btnSend"
+            class="px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-medium text-sm transition flex items-center gap-2 shrink-0 shadow-lg shadow-cyan-600/20 disabled:opacity-50 disabled:cursor-not-allowed">
+            <span>Send</span>
+            <i class="fa-solid fa-paper-plane text-xs"></i>
+          </button>
+        </form>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Custom API Key Settings Modal (Optional User Key Override) -->
+  <div id="apiKeyModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-semibold text-white flex items-center gap-2">
+          <i class="fa-solid fa-key text-cyan-400"></i> Gemini API Key Settings
+        </h3>
+        <button id="btnCloseModal" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <p class="text-xs text-slate-400 leading-relaxed">
+        By default, calls are routed using the standard environment key. If you wish to use your own custom Gemini API Key, enter it below.
+      </p>
+      <div>
+        <label class="text-xs font-mono text-slate-300 block mb-1">API Key</label>
+        <input type="password" id="customApiKeyInput" placeholder="AIzaSy..." 
+          class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-cyan-500" />
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button id="btnSaveApiKey" class="px-4 py-2 text-xs font-medium bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl transition">Save & Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Logic -->
+  <script>
+    // Global Application State
+    const state = {
+      boxValues: ['', '', '', '', '', ''],
+      uploadedFile: null,
+      parsedSheetData: null, // Structured json or markdown text
+      customApiKey: '',
+      chatHistory: []
+    };
+
+    // DOM Elements
+    const codeBoxes = document.querySelectorAll('.code-box');
+    const statusDots = document.querySelectorAll('.status-dot');
+    const combinedCodeDisplay = document.getElementById('combinedCodeDisplay');
+    const btnRandomize = document.getElementById('btnRandomize');
+    const btnClearBoxes = document.getElementById('btnClearBoxes');
+    
+    const excelFileInput = document.getElementById('excelFileInput');
+    const btnAttach = document.getElementById('btnAttach');
+    const attachmentTray = document.getElementById('attachmentTray');
+    const attachedFileName = document.getElementById('attachedFileName');
+    const attachedFileDetails = document.getElementById('attachedFileDetails');
+    const btnRemoveAttachment = document.getElementById('btnRemoveAttachment');
+    const filePreviewContainer = document.getElementById('filePreviewContainer');
+    const sheetMeta = document.getElementById('sheetMeta');
+
+    const chatForm = document.getElementById('chatForm');
+    const promptInput = document.getElementById('promptInput');
+    const chatMessages = document.getElementById('chatMessages');
+    const btnClearChat = document.getElementById('btnClearChat');
+
+    const apiKeyBtn = document.getElementById('apiKeyBtn');
+    const apiKeyModal = document.getElementById('apiKeyModal');
+    const btnCloseModal = document.getElementById('btnCloseModal');
+    const btnSaveApiKey = document.getElementById('btnSaveApiKey');
+    const customApiKeyInput = document.getElementById('customApiKeyInput');
+    const apiKeyStatus = document.getElementById('apiKeyStatus');
+
+    // Init & Event Listeners
+    window.addEventListener('DOMContentLoaded', () => {
+      setupBoxInputs();
+      setupExcelParsing();
+      setupChat();
+      setupApiKeyModal();
+    });
+
+    // --- 1. BOX INPUT VALIDATION & LOGIC ---
+    function setupBoxInputs() {
+      codeBoxes.forEach((box, idx) => {
+        // Enforce 2-digit numerical constraints
+        box.addEventListener('input', (e) => {
+          let val = e.target.value.replace(/\D/g, ''); // strip non-digits
+          if (val.length > 2) val = val.slice(0, 2);
+          
+          e.target.value = val;
+          state.boxValues[idx] = val;
+          
+          updateBoxStatus(idx, val);
+          updateCombinedDisplay();
+
+          // Auto-advance to next box when 2 digits entered
+          if (val.length === 2 && idx < codeBoxes.length - 1) {
+            codeBoxes[idx + 1].focus();
+            codeBoxes[idx + 1].select();
+          }
+        });
+
+        // Format to 2 digits on blur if single digit entered (e.g. "5" -> "05")
+        box.addEventListener('blur', (e) => {
+          let val = e.target.value;
+          if (val.length === 1) {
+            val = '0' + val;
+            e.target.value = val;
+            state.boxValues[idx] = val;
+            updateBoxStatus(idx, val);
+            updateCombinedDisplay();
+          }
+        });
+
+        // Keydown handlers for arrow navigation & backspace behavior
+        box.addEventListener('keydown', (e) => {
+          if (e.key === 'Backspace' && !box.value && idx > 0) {
+            codeBoxes[idx - 1].focus();
+          } else if (e.key === 'ArrowRight' && idx < codeBoxes.length - 1) {
+            codeBoxes[idx + 1].focus();
+          } else if (e.key === 'ArrowLeft' && idx > 0) {
+            codeBoxes[idx - 1].focus();
+          }
+        });
+      });
+
+      btnRandomize.addEventListener('click', () => {
+        codeBoxes.forEach((box, i) => {
+          const randNum = Math.floor(Math.random() * 100);
+          const formatted = randNum.toString().padStart(2, '0');
+          box.value = formatted;
+          state.boxValues[i] = formatted;
+          updateBoxStatus(i, formatted);
+        });
+        updateCombinedDisplay();
+      });
+
+      btnClearBoxes.addEventListener('click', () => {
+        codeBoxes.forEach((box, i) => {
+          box.value = '';
+          state.boxValues[i] = '';
+          updateBoxStatus(i, '');
+        });
+        updateCombinedDisplay();
+      });
+    }
+
+    function updateBoxStatus(index, val) {
+      const dot = statusDots[index];
+      if (val.length === 2) {
+        dot.textContent = 'Valid (00-99)';
+        dot.className = 'status-dot text-[10px] text-emerald-400 font-medium mt-1';
+        codeBoxes[index].classList.remove('border-slate-700');
+        codeBoxes[index].classList.add('border-cyan-500');
+      } else if (val.length === 1) {
+        dot.textContent = '1 Digit';
+        dot.className = 'status-dot text-[10px] text-amber-400 mt-1';
+        codeBoxes[index].classList.remove('border-cyan-500');
+        codeBoxes[index].classList.add('border-slate-700');
+      } else {
+        dot.textContent = 'Empty';
+        dot.className = 'status-dot text-[10px] text-slate-500 mt-1';
+        codeBoxes[index].classList.remove('border-cyan-500');
+        codeBoxes[index].classList.add('border-slate-700');
+      }
+    }
+
+    function updateCombinedDisplay() {
+      const formatted = state.boxValues.map(v => v !== '' ? (v.length === 1 ? '0' + v : v) : '--');
+      combinedCodeDisplay.textContent = formatted.join(' ');
+    }
+
+
+    // --- 2. SPREADSHEET (XLSX / CSV) PARSING LOGIC ---
+    function setupExcelParsing() {
+      btnAttach.addEventListener('click', () => excelFileInput.click());
+
+      excelFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        handleSelectedFile(file);
+      });
+
+      btnRemoveAttachment.addEventListener('click', () => {
+        state.uploadedFile = null;
+        state.parsedSheetData = null;
+        excelFileInput.value = '';
+        attachmentTray.classList.add('hidden');
+        sheetMeta.textContent = 'No file uploaded';
+        filePreviewContainer.innerHTML = `
+          <i class="fa-solid fa-file-circle-plus text-3xl text-slate-600 mb-2"></i>
+          <p class="text-xs text-slate-400 max-w-xs">Upload an Excel (.xlsx, .xls) or CSV file in the chat bar below to inspect spreadsheet data here.</p>
+        `;
+      });
+    }
+
+    function handleSelectedFile(file) {
+      state.uploadedFile = file;
+      attachedFileName.textContent = file.name;
+      attachedFileDetails.textContent = `(${(file.size / 1024).toFixed(1)} KB)`;
+      attachmentTray.classList.remove('hidden');
+
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          
+          // Parse all worksheets
+          const sheetNames = workbook.SheetNames;
+          let compiledSheets = {};
+          let totalRows = 0;
+
+          sheetNames.forEach(sheetName => {
+            const worksheet = workbook.Sheets[sheetName];
+            // Get JSON rows
+            const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            compiledSheets[sheetName] = jsonRows;
+            totalRows += jsonRows.length;
+          });
+
+          state.parsedSheetData = compiledSheets;
+          sheetMeta.textContent = `${sheetNames.length} sheet(s) · ~${totalRows} rows`;
+
+          // Render Preview Table
+          renderSpreadsheetPreview(compiledSheets);
+
+        } catch (err) {
+          console.error("Error parsing spreadsheet:", err);
+          filePreviewContainer.innerHTML = `<p class="text-xs text-rose-400">Failed to parse spreadsheet: ${err.message}</p>`;
+        }
+      };
+
+      reader.readAsArrayBuffer(file);
+    }
+
+    function renderSpreadsheetPreview(parsedData) {
+      const sheetNames = Object.keys(parsedData);
+      if (sheetNames.length === 0) return;
+
+      const firstSheet = sheetNames[0];
+      const rows = parsedData[firstSheet];
+
+      if (!rows || rows.length === 0) {
+        filePreviewContainer.innerHTML = `<p class="text-xs text-amber-400">Sheet is empty.</p>`;
+        return;
+      }
+
+      let tableHtml = `<div class="w-full text-left font-mono text-[11px]">
+        <div class="text-[10px] text-cyan-400 font-semibold mb-2 uppercase tracking-wider">Previewing: ${firstSheet} (${rows.length} rows)</div>
+        <div class="overflow-x-auto max-h-[300px] border border-slate-800 rounded-lg">
+          <table class="w-full border-collapse">
+            <thead>`;
+
+      rows.slice(0, 10).forEach((row, rowIndex) => {
+        if (rowIndex === 0) {
+          tableHtml += `<tr class="bg-slate-800 text-slate-200">`;
+          row.forEach(cell => {
+            tableHtml += `<th class="p-2 border-b border-slate-700 font-semibold truncate">${cell ?? ''}</th>`;
+          });
+          tableHtml += `</tr></thead><tbody>`;
+        } else {
+          tableHtml += `<tr class="border-b border-slate-800/80 hover:bg-slate-800/40 text-slate-300">`;
+          row.forEach(cell => {
+            tableHtml += `<td class="p-2 truncate max-w-[150px]">${cell ?? ''}</td>`;
+          });
+          tableHtml += `</tr>`;
+        }
+      });
+
+      tableHtml += `</tbody></table></div>`;
+      if (rows.length > 10) {
+        tableHtml += `<p class="text-[10px] text-slate-500 mt-2 text-right">+ ${rows.length - 10} more rows sent to Gemini API</p>`;
+      }
+      tableHtml += `</div>`;
+
+      filePreviewContainer.innerHTML = tableHtml;
+    }
+
+
+    // --- 3. GEMINI CHATBOT INTEGRATION ---
+    function setupChat() {
+      chatForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const userPrompt = promptInput.value.trim();
+        if (!userPrompt) return;
+
+        // Display user message in UI
+        appendMessage('user', userPrompt);
+        promptInput.value = '';
+
+        // Generate AI Response with context
+        await sendGeminiRequest(userPrompt);
+      });
+
+      btnClearChat.addEventListener('click', () => {
+        state.chatHistory = [];
+        chatMessages.innerHTML = `
+          <div class="flex gap-3">
+            <div class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0 mt-0.5">
+              <i class="fa-solid fa-robot text-xs"></i>
+            </div>
+            <div class="bg-slate-900/90 border border-slate-700/60 rounded-2xl rounded-tl-none p-4 max-w-[85%] text-slate-200 text-sm space-y-2">
+              <p class="font-medium text-white">Chat history cleared.</p>
+              <p class="text-xs text-slate-400">Ready for new queries or commands.</p>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function appendMessage(role, text) {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'flex gap-3';
+
+      if (role === 'user') {
+        msgDiv.innerHTML = `
+          <div class="flex gap-3 ml-auto max-w-[85%] justify-end">
+            <div class="bg-cyan-600 text-white rounded-2xl rounded-tr-none p-3.5 text-sm shadow-md">
+              <p class="whitespace-pre-wrap">${escapeHtml(text)}</p>
+            </div>
+            <div class="w-8 h-8 rounded-lg bg-cyan-600 text-white flex items-center justify-center shrink-0 mt-0.5 text-xs">
+              <i class="fa-solid fa-user"></i>
+            </div>
+          </div>
+        `;
+      } else {
+        const renderedHtml = typeof marked !== 'undefined' ? marked.parse(text) : text;
+        msgDiv.innerHTML = `
+          <div class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0 mt-0.5">
+            <i class="fa-solid fa-robot text-xs"></i>
+          </div>
+          <div class="bg-slate-900/90 border border-slate-700/60 rounded-2xl rounded-tl-none p-4 max-w-[85%] text-slate-200 text-sm prose prose-invert prose-sm">
+            ${renderedHtml}
+          </div>
+        `;
+      }
+
+      chatMessages.appendChild(msgDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      return msgDiv;
+    }
+
+    async function sendGeminiRequest(userPrompt) {
+      // Create typing loading indicator
+      const loadingDiv = document.createElement('div');
+      loadingDiv.className = 'flex gap-3';
+      loadingDiv.innerHTML = `
+        <div class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0 mt-0.5">
+          <i class="fa-solid fa-robot text-xs animate-spin"></i>
+        </div>
+        <div class="bg-slate-900/90 border border-slate-700/60 rounded-2xl rounded-tl-none px-4 py-3 text-slate-400 text-xs flex items-center gap-2">
+          <i class="fa-solid fa-circle-notch animate-spin text-cyan-400"></i>
+          <span>Analyzing spreadsheet data & 2-digit codes...</span>
+        </div>
+      `;
+      chatMessages.appendChild(loadingDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+
+      // Prepare Prompt Context Payload
+      const systemInstruction = `You are an expert AI data analyst. You have direct access to 6 numerical box inputs entered by the user, as well as parsed spreadsheet data (Excel/CSV) if uploaded. Help the user answer questions, cross-reference numbers, summarize data, or search for matching row codes. Always format your responses cleanly with Markdown tables or bullet points where applicable.`;
+
+      // Build Context String
+      let contextString = `### CURRENT 6 BOX INPUT VALUES:\n`;
+      state.boxValues.forEach((val, i) => {
+        contextString += `- Box ${i + 1}: "${val !== '' ? val : 'Not Set'}"\n`;
+      });
+
+      if (state.parsedSheetData) {
+        contextString += `\n### PARSED SPREADSHEET ATTACHMENT:\n`;
+        contextString += `File Name: ${state.uploadedFile?.name}\n`;
+        contextString += `Content (JSON format per worksheet):\n`;
+        contextString += JSON.stringify(state.parsedSheetData, null, 2).slice(0, 30000); // limit string size for performance
+      } else {
+        contextString += `\n### ATTACHED SPREADSHEET: None\n`;
+      }
+
+      const fullPrompt = `${contextString}\n\n### USER PROMPT:\n${userPrompt}`;
+
+      // Call Gemini API
+      try {
+        const apiKey = state.customApiKey || "";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+        const payload = {
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: fullPrompt }]
+            }
+          ],
+          systemInstruction: {
+            parts: [{ text: systemInstruction }]
+          }
+        };
+
+        const response = await fetchWithBackoff(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        chatMessages.removeChild(loadingDiv);
+
+        if (result.candidates && result.candidates[0]?.content?.parts?.[0]?.text) {
+          const replyText = result.candidates[0].content.parts[0].text;
+          appendMessage('model', replyText);
+          state.chatHistory.push({ role: 'user', text: userPrompt }, { role: 'model', text: replyText });
+        } else {
+          appendMessage('model', "I'm sorry, I couldn't generate a response. Please check your prompt or file format.");
+        }
+
+      } catch (err) {
+        if (chatMessages.contains(loadingDiv)) {
+          chatMessages.removeChild(loadingDiv);
+        }
+        console.error("Gemini API Error:", err);
+        appendMessage('model', `**Error communicating with Gemini API:** ${err.message}. If using a custom key, please verify it in settings.`);
+      }
+    }
+
+    // Helper: Exponential Backoff Fetch
+    async function fetchWithBackoff(url, options, retries = 3, delay = 1000) {
+      try {
+        const res = await fetch(url, options);
+        if (!res.ok && res.status === 429 && retries > 0) {
+          await new Promise(r => setTimeout(r, delay));
+          return fetchWithBackoff(url, options, retries - 1, delay * 2);
+        }
+        return res;
+      } catch (err) {
+        if (retries > 0) {
+          await new Promise(r => setTimeout(r, delay));
+          return fetchWithBackoff(url, options, retries - 1, delay * 2);
+        }
+        throw err;
+      }
+    }
+
+    // --- 4. API KEY MODAL LOGIC ---
+    function setupApiKeyModal() {
+      apiKeyBtn.addEventListener('click', () => apiKeyModal.classList.remove('hidden'));
+      btnCloseModal.addEventListener('click', () => apiKeyModal.classList.add('hidden'));
+      btnSaveApiKey.addEventListener('click', () => {
+        const val = customApiKeyInput.value.trim();
+        state.customApiKey = val;
+        if (val) {
+          apiKeyStatus.textContent = 'API Key: Custom Set';
+        } else {
+          apiKeyStatus.textContent = 'API Key: Pre-configured';
+        }
+        apiKeyModal.classList.add('hidden');
+      });
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/[&<>"']/g, function(m) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+      });
+    }
+  </script>
+</body>
+</html>
